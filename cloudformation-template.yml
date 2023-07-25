@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: 'v1'
+Description: Static-Web-Application
+
+
+Parameters:
+  WebBucketName:
+    Type: String
+    Description: webapplicationBucket
+    Default: WebAppBucket
+
+
+Resources:
+  WebContentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 
+      WebsiteConfiguration:
+        IndexDocument: index.html
+
+
+  WebBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:  WebContentBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: GetObject
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Join ['', ['arn:aws:s3::',  WebBucket, '/*']]
+
+
+  WebDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName:  WebBcket.DomainName
+            Id: WebContentBucketOrigin
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+          TargetOriginId: WebBucketOrigin
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+        Enabled: true
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        HttpVersion: http2
+
+Outputs:
+  WebsiteURL:
+    Description: URL 
+    Value: 
+
+
+With the help of this CloudFormation template, an S3 bucket is created, set up to host static websites, and a CloudFront distribution is configured with the default CloudFront certificate for SSL termination.
+
